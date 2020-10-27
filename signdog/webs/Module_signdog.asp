@@ -22,46 +22,6 @@
 <script type="text/javascript" src="/popup.js"></script>
 <script src="/calendar/jquery-ui.js"></script> 
 <style>
-.loading_bar {
-	width:250px;
-	border: 0px;
-}
-.loading_bar > div {
-	margin-left:-10px;
-	background-color:white;
-	border-radius:7px;
-	padding:1px;
-}
-.status_bar {
-	height:18px;
-	border-radius:7px;
-}
-.FormTable th{
-	width:25%;
-}
-.content_status {
-	position: absolute;
-	-webkit-border-radius: 5px;
-	-moz-border-radius: 5px;
-	border-radius:10px;
-	z-index: 10;
-	/*background-color:#2B373B;*/
-	top: 140px;
-	return height:auto;
-	box-shadow: 3px 3px 10px #000;
-	box-shadow: 3px 3px 10px #000;
-	background: #fff;
-	margin-left:120px;
-	width:520px;
-	height:470px;
-	display: none;
-}
-input:focus {
-	outline: none;
-}
-input[type=checkbox]{
-	vertical-align:middle;
-}
 a:focus {
 	outline: none;
 }
@@ -97,6 +57,7 @@ a:focus {
     height: 1px;
     width: 98%;
 }
+#signdog_main { border:1px solid #91071f; } /* W3C rogcss */
 </style>
 <script>
 var odm = '<% nvram_get("productid"); %>'
