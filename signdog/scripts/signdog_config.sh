@@ -42,7 +42,7 @@ fun_wan_start(){
 }
 start_signdog() {
 	# 插件开启的时候同步一次时间
-	if [ "${signdog_enable}" == "1" ];then
+	if [ "${signdog_enable}" == "1" -a -n "$(which ntpclient)" ];then
 		sync_ntp
 	fi
 
