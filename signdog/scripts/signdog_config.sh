@@ -70,8 +70,8 @@ start_signdog() {
 	if [ "$signdog_enable" == "1" ]; then
 		echo_date "启动签到狗3.0主程序..."
 		export GOGC=40
-		mkdir -p /koolshare/configs/singdog
-		cd /koolshare/configs/singdog
+		mkdir -p /koolshare/configs/signdog
+		cd /koolshare/configs/signdog
 		/koolshare/bin/signdog >/dev/null 2>&1 &
 
 		local SDPID
