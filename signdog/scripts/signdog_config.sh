@@ -6,7 +6,6 @@ INI_FILE=/koolshare/configs/signdog.ini
 LOG_FILE=/tmp/upload/signdog_log.txt
 LOCK_FILE=/var/lock/signdog.lock
 alias echo_date='echo 【$(TZ=UTC-8 date -R +%Y年%m月%d日\ %X)】:'
-true > $LOG_FILE
 
 set_lock() {
 	exec 1000>"$LOCK_FILE"
@@ -54,18 +53,18 @@ start_signdog() {
 	fi
 	
 	# 定时任务
-	if [ "${signdog_common_cron_time}" == "0" ]; then
-		cru d signdog_monitor >/dev/null 2>&1
-	else
-		if [ "${signdog_common_cron_hour_min}" == "min" ]; then
-			echo_date "设置定时任务：每隔${signdog_common_cron_time}分钟注册一次signdog服务..."
-			cru a signdog_monitor "*/"${signdog_common_cron_time}" * * * * /bin/sh /koolshare/scripts/signdog_config.sh"
-		elif [ "${signdog_common_cron_hour_min}" == "hour" ]; then
-			echo_date "设置定时任务：每隔${signdog_common_cron_time}小时注册一次signdog服务..."
-			cru a signdog_monitor "0 */"${signdog_common_cron_time}" * * * /bin/sh /koolshare/scripts/signdog_config.sh"
-		fi
-		echo_date "定时任务设置完成！"
-	fi
+	# if [ "${signdog_common_cron_time}" == "0" ]; then
+	# 	cru d signdog_monitor >/dev/null 2>&1
+	# else
+	# 	if [ "${signdog_common_cron_hour_min}" == "min" ]; then
+	# 		echo_date "设置定时任务：每隔${signdog_common_cron_time}分钟注册一次signdog服务..."
+	# 		cru a signdog_monitor "*/"${signdog_common_cron_time}" * * * * /bin/sh /koolshare/scripts/signdog_config.sh"
+	# 	elif [ "${signdog_common_cron_hour_min}" == "hour" ]; then
+	# 		echo_date "设置定时任务：每隔${signdog_common_cron_time}小时注册一次signdog服务..."
+	# 		cru a signdog_monitor "0 */"${signdog_common_cron_time}" * * * /bin/sh /koolshare/scripts/signdog_config.sh"
+	# 	fi
+	# 	echo_date "定时任务设置完成！"
+	# fi
 
 	# 开启signdog
 	if [ "$signdog_enable" == "1" ]; then
@@ -152,6 +151,7 @@ esac
 case $2 in
 web_submit)
 	set_lock
+	true > $LOG_FILE
 	http_response "$1"
 	if [ "${signdog_enable}" == "1" ]; then
 		stop | tee -a $LOG_FILE
