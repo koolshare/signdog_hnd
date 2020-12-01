@@ -47,6 +47,9 @@ def build_module():
         print u"not found %s file，check install.sh file"
         return
     print u"build..."
+
+    open(parent_path + "/" + conf["module"] + "/" +"version", "w").write(conf["version"])
+    
     t = Template("cd $parent_path && rm -f $module.tar.gz && tar -zcf $module.tar.gz $module")
     os.system(t.substitute({"parent_path": parent_path, "module": conf["module"]}))
     conf["md5"] = md5sum(os.path.join(parent_path, conf["module"] + ".tar.gz"))
