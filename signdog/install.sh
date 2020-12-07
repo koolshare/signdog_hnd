@@ -5,7 +5,8 @@ DIR=$(cd $(dirname $0); pwd)
 module=signdog
 ROG_86U=0
 EXT_NU=$(nvram get extendno)
-EXT_NU=${EXT_NU%_*}
+EXT_NU=$(echo ${EXT_NU%_*} | grep -Eo "^[0-9]{1,10}$")
+[ -z "${EXT_NU}" ] && EXT_NU="0"
 odmpid=$(nvram get odmpid)
 productid=$(nvram get productid)
 [ -n "${odmpid}" ] && MODEL="${odmpid}" || MODEL="${productid}"
