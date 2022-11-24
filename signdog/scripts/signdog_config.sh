@@ -27,19 +27,6 @@ sync_ntp(){
 		echo_date "时间同步失败，跳过！"
 	fi
 }
-fun_wan_start(){
-	if [ "${signdog_enable}" == "1" ];then
-		if [ ! -L "/koolshare/init.d/S95signdog.sh" ];then
-			echo_date "添加开机启动..."
-			ln -sf /koolshare/scripts/signdog_config.sh /koolshare/init.d/S95signdog.sh
-		fi
-	else
-		if [ -L "/koolshare/init.d/S95signdog.sh" ];then
-			echo_date "删除开机启动..."
-			rm -rf /koolshare/init.d/S95signdog.sh >/dev/null 2>&1
-		fi
-	fi
-}
 start_signdog() {
 	# 插件开启的时候同步一次时间
 	if [ "${signdog_enable}" == "1" -a -n "$(which ntpclient)" ];then
@@ -51,47 +38,54 @@ start_signdog() {
 		echo_date "关闭当前签到狗3.0进程..."
 		killall signdog >/dev/null 2>&1
 	fi
-	
-	# 定时任务
-	# if [ "${signdog_common_cron_time}" == "0" ]; then
-	# 	cru d signdog_monitor >/dev/null 2>&1
-	# else
-	# 	if [ "${signdog_common_cron_hour_min}" == "min" ]; then
-	# 		echo_date "设置定时任务：每隔${signdog_common_cron_time}分钟注册一次signdog服务..."
-	# 		cru a signdog_monitor "*/"${signdog_common_cron_time}" * * * * /bin/sh /koolshare/scripts/signdog_config.sh"
-	# 	elif [ "${signdog_common_cron_hour_min}" == "hour" ]; then
-	# 		echo_date "设置定时任务：每隔${signdog_common_cron_time}小时注册一次signdog服务..."
-	# 		cru a signdog_monitor "0 */"${signdog_common_cron_time}" * * * /bin/sh /koolshare/scripts/signdog_config.sh"
-	# 	fi
-	# 	echo_date "定时任务设置完成！"
-	# fi
 
 	# 开启signdog
-	if [ "$signdog_enable" == "1" ]; then
-		echo_date "启动签到狗3.0主程序..."
-		export GOGC=40
-		mkdir -p /koolshare/configs/signdog
-		cd /koolshare/configs/signdog
-		/koolshare/bin/signdog >/dev/null 2>&1 &
+	echo_date "启动签到狗3.0主程序..."
+	export GOGC=40
+	mkdir -p /koolshare/configs/signdog
+	cd /koolshare/configs/signdog
+	/koolshare/bin/signdog >/dev/null 2>&1 &
 
-		local SDPID
-		local i=10
-		until [ -n "$SDPID" ]; do
-			i=$(($i - 1))
-			SDPID=$(pidof signdog)
-			if [ "$i" -lt 1 ]; then
-				echo_date "签到狗3.0进程启动失败！"
-				echo_date "可能是内存不足造成的，建议使用虚拟内存后重试！"
-				close_in_five
-			fi
-			usleep 450000
-		done
-		echo_date "签到狗3.0启动成功，pid：${SDPID}"
-		fun_wan_start
-	else
-		stop
+	local SDPID
+	local i=10
+	until [ -n "$SDPID" ]; do
+		i=$(($i - 1))
+		SDPID=$(pidof signdog)
+		if [ "$i" -lt 1 ]; then
+			echo_date "签到狗3.0进程启动失败！"
+			echo_date "可能是内存不足造成的，建议使用虚拟内存后重试！"
+			close_in_five
+		fi
+		usleep 450000
+	done
+	echo_date "主进程启动成功，pid：${SDPID}..."
+
+	start_dnat
+	
+	echo_date "签到狗3.0启动成功，本窗口将在5s内自动关闭！"
+}
+start_dnat() {
+	# DNAT
+	if [ "${signdog_forward}" == "1" ]; then
+		local CM=$(lsmod | grep xt_comment)
+		local OS=$(uname -r)
+		if [ -z "${CM}" -a -f "/lib/modules/${OS}/kernel/net/netfilter/xt_comment.ko" ];then
+			echo_date "加载xt_comment.ko内核模块！"
+			insmod /lib/modules/${OS}/kernel/net/netfilter/xt_comment.ko
+		fi
+		echo_date "签到狗：开启端口转发，允许公网访问！"
+		local LANADDR=$(ifconfig br0|grep -Eo "inet addr.+"|awk -F ":| " '{print $3}' 2>/dev/null)
+		local MATCH=$(iptables -t nat -S PREROUTING | grep signdog_rule)
+		if [ -n "${LANADDR}" -a -z "${MATCH}" ];then
+			iptables -t nat -A VSERVER -p tcp -m tcp --dport 9930 -j DNAT --to-destination ${LANADDR}:9930 -m comment --comment "signdog_rule"
+		fi
 	fi
-	echo_date "签到狗3.0插件启动完毕，本窗口将在5s内自动关闭！"
+}
+stop_dnat(){
+	local RULE=$(iptables -t nat -S | grep -w "signdog_rule")
+	if [ -n "${RULE}" ];then
+		iptables -t nat -S | grep -w "signdog_rule" | sed 's/-A/iptables -t nat -D/g' > clean.sh && chmod 777 clean.sh && ./clean.sh > /dev/null 2>&1 && rm clean.sh
+	fi
 }
 close_in_five() {
 	echo_date "插件将在5秒后自动关闭！！"
@@ -113,23 +107,22 @@ stop() {
 		killall signdog >/dev/null 2>&1
 	fi
 
-	# if [ -n "$(cru l|grep signdog_monitor)" ];then
-	# 	echo_date "删除定时任务..."
-	# 	cru d signdog_monitor >/dev/null 2>&1
-	# fi
-
 	if [ -L "/koolshare/init.d/S95signdog.sh" ];then
 		echo_date "删除开机启动..."
-   		rm -rf /koolshare/init.d/S95signdog.sh >/dev/null 2>&1
-   	fi
+		rm -rf /koolshare/init.d/S95signdog.sh >/dev/null 2>&1
+	fi
+
+	stop_dnat
 }
 
 case $1 in
 start)
 	set_lock
 	if [ "${signdog_enable}" == "1" ]; then
-		logger "[软件中心]: 启动signdog！"
+		logger "[软件中心]: 启动签到狗！"
 		start_signdog
+	else
+		logger "[软件中心]: 签到狗未开启，跳过开机启动！"
 	fi
 	unset_lock
 	;;
@@ -138,6 +131,13 @@ restart)
 	if [ "${signdog_enable}" == "1" ]; then
 		stop
 		start_signdog
+	fi
+	unset_lock
+	;;
+start_nat)
+	set_lock
+	if [ "${signdog_enable}" == "1" ]; then
+		start_dnat
 	fi
 	unset_lock
 	;;

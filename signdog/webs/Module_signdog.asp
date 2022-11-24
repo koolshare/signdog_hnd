@@ -20,7 +20,6 @@
 <script language="JavaScript" type="text/javascript" src="/client_function.js"></script>
 <script type="text/javascript" src="/general.js"></script>
 <script type="text/javascript" src="/popup.js"></script>
-<script src="/calendar/jquery-ui.js"></script> 
 <style>
 a:focus {
 	outline: none;
@@ -57,12 +56,11 @@ a:focus {
     height: 1px;
     width: 98%;
 }
-#signdog_main { border:1px solid #91071f; } /* W3C rogcss */
 </style>
 <script>
 var odm = '<% nvram_get("productid"); %>'
 var lan_ipaddr = "<% nvram_get(lan_ipaddr); %>"
-var params_chk = ['signdog_enable'];
+var params_chk = ['signdog_enable', 'signdog_forward'];
 var params_inp = [];
 var	refresh_flag;
 var count_down;
@@ -114,9 +112,24 @@ function conf2obj(){
 	//		$("#" + params_inp[i]).val(dbus[params_inp[i]]);
 	//	}
 	//}
+	var curr_host = window.location.hostname;												
+	var websiteHref = "//" + lan_ipaddr + ":9930";
+	var hostname = document.domain;
+	if (hostname.indexOf('.kooldns.cn') != -1 || hostname.indexOf('.ddnsto.com') != -1 || hostname.indexOf('.tocmcc.cn') != -1) {
+		if(hostname.indexOf('.kooldns.cn') != -1){
+			hostname = hostname.replace('.kooldns.cn','-signdog.kooldns.cn');
+		}else if(hostname.indexOf('.ddnsto.com') != -1){
+			hostname = hostname.replace('.ddnsto.com','-signdog.ddnsto.com');
+		}else{
+			hostname = hostname.replace('.tocmcc.cn','-signdog.tocmcc.cn');
+		}
+		websiteHref = "//" + hostname;
+	}else{
+		websiteHref = "http://" + curr_host + ":9930";
+	}
 	if(dbus["signdog_enable"] == "1"){
 		E("signdog_console").style.display = "";
-		E("signdog_website").href = "//" + lan_ipaddr + ":9930";
+		E("signdog_website").href = websiteHref
 	}
 }
 function get_status(){
@@ -236,6 +249,7 @@ function menu_hook(title, tab) {
 </script>
 </head>
 <body onload="init();">
+<body id="app" skin='<% nvram_get("sc_skin"); %>' onload="init();">
 	<div id="TopBanner"></div>
 	<div id="Loading" class="popup_bg"></div>
 	<div id="LoadingBar" class="popup_bar_bg_ks" style="z-index: 200;" >
@@ -301,8 +315,6 @@ function menu_hook(title, tab) {
 														</label>
 													</div>
 													<div style="float: right;margin-top:5px;margin-right:30px;">
-														<a type="button" href="https://koolshare.cn/forum-98-1.html" target="_blank" class="ks_btn" style="cursor: pointer;margin-left:5px;border:none" >使用交流</a>
-														<!--<a type="button" href="https://raw.githubusercontent.com/koolshare/rogsoft/master/signdog/Changelog.txt" target="_blank" class="ks_btn" style="cursor: pointer;margin-left:5px;border:none" >更新日志</a>-->
 														<a type="button" class="ks_btn" href="javascript:void(0);" onclick="get_log(1)" style="cursor: pointer;margin-left:5px;border:none">查看日志</a>
 													</div>
 												</td>
@@ -310,6 +322,12 @@ function menu_hook(title, tab) {
 											<tr>
 												<th>状态</th>
 												<td><span id="signdog_status"></span></td>
+											</tr>
+											<tr>
+												<th title="勾选后就可以从外部公网（如ddns）来访问签到狗后台了！">允许公网访问控制台</th>
+												<td>
+													<input type="checkbox" id="signdog_forward" style="vertical-align:middle;" checked="checked">
+												</td>
 											</tr>
 											<tr id="signdog_console" style="display:none;">
 												<th>控制台</th>

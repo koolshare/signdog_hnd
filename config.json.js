@@ -1,8 +1,8 @@
 {
     "description": "签到狗3.0，一签就到", 
     "home_url": "Module_signdog.asp", 
-    "md5": "8ba1b87132f23a95a7451787819e8b0a", 
+    "md5": "751692df42bef0c8374ccf5624f951a8", 
     "module": "signdog", 
     "title": "签到狗3.0", 
-    "version": "1.6.4"
+    "version": "1.6.5"
 }
