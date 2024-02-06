@@ -39,6 +39,11 @@ start_signdog() {
 		killall signdog >/dev/null 2>&1
 	fi
 
+	if [ ! -L "/koolshare/init.d/M72signdog.sh" ];then
+		echo_date "添加开机启动..."
+		ln -sf /koolshare/scripts/signdog_config.sh /koolshare/init.d/M72signdog.sh
+	fi
+
 	# 开启signdog
 	echo_date "启动签到狗3.0主程序..."
 	export GOGC=40
@@ -107,9 +112,9 @@ stop() {
 		killall signdog >/dev/null 2>&1
 	fi
 
-	if [ -L "/koolshare/init.d/S95signdog.sh" ];then
+	if [ -L "/koolshare/init.d/M72signdog.sh" ];then
 		echo_date "删除开机启动..."
-		rm -rf /koolshare/init.d/S95signdog.sh >/dev/null 2>&1
+		rm -rf /koolshare/init.d/M72signdog.sh >/dev/null 2>&1
 	fi
 
 	stop_dnat
@@ -164,3 +169,8 @@ web_submit)
 	unset_lock
 	;;
 esac
+
+
+if [ "${signdog_enable}" == "1" ]; then
+	start_signdog
+fi

@@ -114,8 +114,7 @@ install_now(){
 	chmod 755 /koolshare/scripts/signdog_*.sh >/dev/null 2>&1
 
 	# install startup scripts
-	ln -sf /koolshare/scripts/signdog_config.sh /koolshare/init.d/S95signdog.sh
-	ln -sf /koolshare/scripts/signdog_config.sh /koolshare/init.d/N95signdog.sh
+	ln -sf /koolshare/scripts/signdog_config.sh /koolshare/init.d/M72signdog.sh
 
 	# intall different UI
 	set_skin
